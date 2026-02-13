@@ -1,5 +1,6 @@
 package com.practicum.habittracker.data.di
 
+import android.content.Context
 import com.practicum.habittracker.data.dao.HabitCompletionDao
 import com.practicum.habittracker.data.dao.HabitDao
 import com.practicum.habittracker.data.dao.PomodoroDao
@@ -7,12 +8,15 @@ import com.practicum.habittracker.data.model.HabitMapper
 import com.practicum.habittracker.data.repository.HabitCompletionRepositoryImpl
 import com.practicum.habittracker.data.repository.HabitRepositoryImpl
 import com.practicum.habittracker.data.repository.PomodoroRepositoryImpl
+import com.practicum.habittracker.data.repository.SettingsRepositoryImpl
 import com.practicum.habittracker.domain.repository.HabitCompletionRepository
 import com.practicum.habittracker.domain.repository.HabitRepository
 import com.practicum.habittracker.domain.repository.PomodoroRepository
+import com.practicum.habittracker.domain.repository.SettingsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -41,4 +45,9 @@ object RepositoryModule {
     fun provideHabitCompletionRepository(
         habitCompletionDao: HabitCompletionDao
     ): HabitCompletionRepository = HabitCompletionRepositoryImpl(habitCompletionDao)
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(@ApplicationContext context: Context): SettingsRepository =
+        SettingsRepositoryImpl(context)
 }

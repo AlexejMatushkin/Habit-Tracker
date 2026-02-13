@@ -1,14 +1,21 @@
 package com.practicum.habittracker.presentation.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.practicum.habittracker.domain.model.Habit
 import com.practicum.habittracker.domain.model.HabitCompletion
 import com.practicum.habittracker.domain.repository.HabitCompletionRepository
 import com.practicum.habittracker.domain.repository.HabitRepository
+import com.practicum.habittracker.worker.ReminderWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -17,12 +24,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class HabitViewModel @Inject constructor(
     private val repository: HabitRepository,
-    private val habitCompletionRepository: HabitCompletionRepository
+    private val habitCompletionRepository: HabitCompletionRepository,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _habits = mutableStateOf<List<Habit>>(emptyList())
@@ -103,5 +112,53 @@ class HabitViewModel @Inject constructor(
             set(Calendar.MILLISECOND, 0)
         }
         return cal.timeInMillis
+    }
+
+    fun setReminder(habitId: Long, enabled: Boolean, timeInMillis: Long) {
+        val habit = _habits.value.find { it.id == habitId } ?: return
+        val updated = habit.copy(
+            reminderEnabled = enabled,
+            reminderTime = if (enabled) timeInMillis else 0L
+        )
+        _habits.value = _habits.value.map { if (it.id == habitId) updated else it }
+
+        viewModelScope.launch {
+            repository.updateHabit(updated)
+            if (enabled) {
+                scheduleReminder(habitId, updated.title, timeInMillis)
+            } else {
+                cancelReminder(habitId)
+            }
+        }
+    }
+
+    private fun scheduleReminder(habitId: Long, title: String, timeInMillis: Long) {
+
+        WorkManager.getInstance(context).cancelUniqueWork("reminder_$habitId")
+
+        val now = System.currentTimeMillis()
+        val todayStart = getStartOfDay(now)
+        var firstRun = todayStart + timeInMillis
+        if (firstRun <= now) firstRun += 24 * 60 * 60 * 1000L
+
+        val data = Data.Builder()
+            .putLong("habitId", habitId)
+            .putString("title", title)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<ReminderWorker>()
+            .setInputData(data)
+            .setInitialDelay(firstRun - now, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "reminder_$habitId",
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    private fun cancelReminder(habitId: Long) {
+        WorkManager.getInstance(context).cancelUniqueWork("reminder_$habitId")
     }
 }

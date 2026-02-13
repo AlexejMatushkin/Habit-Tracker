@@ -1,41 +1,16 @@
 package com.practicum.habittracker.domain.model
 
-/**
- * Доменная модель, представляющая привычку в приложении.
- *
- * Используется на уровне бизнес-логики (domain layer) и передаётся между слоями:
- * - Получается из [com.practicum.habittracker.data.model.HabitEntity] через маппинг
- * - Передаётся в UI для отображения
- *
- * Не зависит от Android SDK — чистый Kotlin-класс.
- *
- * @property id Уникальный идентификатор привычки
- * @property title Название привычки (например, "Пить воду")
- * @property isCompleted Флаг, указывающий, выполнена ли привычка сегодня
- */
 data class Habit(
     val id: Long,
     val title: String,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val completedDates: List<Long> = emptyList(),
+    val reminderEnabled: Boolean = false,
+    val reminderTime: Long = 0L
 ) {
-    /**
-     * Объект-сопутник для хранения статических данных и констант.
-     */
+
     companion object {
 
-        /**
-         * Список привычек по умолчанию, используемый для инициализации приложения.
-         *
-         * Может использоваться:
-         * - При первом запуске, если база данных пуста
-         * - В тестах как фикстура
-         * - Для демонстрации интерфейса
-         *
-         * Привычки:
-         * 1. "Пить воду" — не выполнена
-         * 2. "Прогулка" — не выполнена
-         * 3. "Без телефона" — не выполнена
-         */
         val DEFAULT_HABITS = listOf(
             Habit(1, "Пить воду", false),
             Habit(2, "Прогулка", false),

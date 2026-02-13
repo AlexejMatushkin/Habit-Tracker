@@ -31,4 +31,11 @@ class HabitCompletionRepositoryImpl(
                 )
             }
         }
+
+    override fun getAllCompletions(habitId: Long): Flow<List<HabitCompletion>> =
+        habitCompletionDao.getAllCompletions(habitId).map { entities ->
+            entities.map {
+                HabitCompletion(it.habitId, it.date, it.completed)
+            }
+        }
 }
