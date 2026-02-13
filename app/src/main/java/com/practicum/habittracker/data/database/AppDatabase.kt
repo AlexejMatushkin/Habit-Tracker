@@ -18,7 +18,7 @@ import com.practicum.habittracker.data.model.PomodoroStateEntity
         PomodoroStateEntity::class,
         HabitCompletionEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(

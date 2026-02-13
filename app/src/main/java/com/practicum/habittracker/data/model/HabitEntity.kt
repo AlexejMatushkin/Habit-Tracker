@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey
 data class HabitEntity(
     @PrimaryKey val id: Long,
     val title: String,
-    val isCompleted: Boolean,
     val completedDates: List<Long>,
     val reminderEnabled: Boolean,
     val reminderTime: Long

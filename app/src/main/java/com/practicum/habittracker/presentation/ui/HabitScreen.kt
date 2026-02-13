@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +43,7 @@ import androidx.navigation.NavController
 import com.practicum.habittracker.domain.model.Habit
 import com.practicum.habittracker.presentation.navigation.Screens
 import com.practicum.habittracker.presentation.viewmodel.HabitViewModel
+import java.util.Calendar
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +82,11 @@ fun HabitScreen(
             ) {
                 items(habits, key = { it.id }) { habit ->
 
+                    val todayStart = getStartOfDay(System.currentTimeMillis())
+                    val isCompletedToday = habit.completedDates.contains(todayStart)
                     val weeklyCompletions by viewModel.getWeeklyCompletions(habit.id).collectAsState()
+
+
 
                     Row(
                         modifier = Modifier
@@ -96,14 +103,13 @@ fun HabitScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
-                            checked = habit.isCompleted,
+                            checked = isCompletedToday,
                             onCheckedChange = null
                         )
                         Column {
                             Text(text = habit.title)
-                            WeeklyStreak(
-                                completions = weeklyCompletions,
-                                modifier = Modifier.padding(top = 4.dp)
+                            WeeklyStreakWithLabels(
+                                completions = weeklyCompletions
                             )
                         }
                     }
@@ -149,6 +155,9 @@ fun HabitScreen(
                 onReminderToggled = { enabled, timeInMillis ->
                     viewModel.setReminder(habit.id, enabled, timeInMillis)
                     showActionDialog = null
+                },
+                onViewStatistics = {
+                    navController.navigate("${Screens.HABIT_CALENDAR}/${habit.id}?habitTitle=${habit.title}")
                 }
             )
         }
@@ -179,18 +188,61 @@ fun HabitScreen(
 }
 
 @Composable
-fun WeeklyStreak(completions: List<Boolean>, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        completions.forEach { completed ->
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(
-                        color = if (completed) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline,
-                        shape = CircleShape
+fun WeeklyStreakWithLabels(completions: List<Boolean>) {
+    Column {
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс").forEach { day ->
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = day,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1
                     )
-            )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            completions.forEach { completed ->
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                color = if (completed) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+fun getStartOfDay(timestamp: Long): Long {
+    val cal = Calendar.getInstance().apply {
+        timeInMillis = timestamp
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    return cal.timeInMillis
 }

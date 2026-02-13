@@ -51,12 +51,32 @@ class HabitViewModel @Inject constructor(
             val flow = habitCompletionRepository
                 .getCompletions(habitId, getStartOfDay(System.currentTimeMillis()) - 7 * 24 * 60 * 60 * 1000L)
                 .map { completions ->
-                    val today = getStartOfDay(System.currentTimeMillis())
-                    val days = (0..6).map { i ->
-                        val day = today - i * 24 * 60 * 60 * 1000L
-                        completions.any { it.date == day && it.completed }
-                    }.reversed()
-                    days
+                    val completionMap = completions.associateBy { it.date }
+
+                    val today = Calendar.getInstance().apply {
+                        timeInMillis = System.currentTimeMillis()
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    val daysToSubtract = when (val dayOfWeek = today.get(Calendar.DAY_OF_WEEK)) {
+                        Calendar.SUNDAY -> 6
+                        else -> dayOfWeek - Calendar.MONDAY
+                    }
+                    today.add(Calendar.DAY_OF_YEAR, -daysToSubtract)
+
+                    val weekDays = (0 until 7).map { i ->
+                        val dayCal = Calendar.getInstance().apply {
+                            timeInMillis = today.timeInMillis
+                            add(Calendar.DAY_OF_YEAR, i)
+                        }
+                        val dayStart = dayCal.timeInMillis
+                        completionMap[dayStart]?.completed ?: false
+                    }
+
+                    weekDays
                 }
                 .stateIn(
                     scope = viewModelScope,
@@ -68,19 +88,23 @@ class HabitViewModel @Inject constructor(
     }
 
     fun toggleHabit(id: Long) {
+        val today = getStartOfDay(System.currentTimeMillis())
         val current = _habits.value.find { it.id == id } ?: return
-        val newCompleted = !current.isCompleted
-        val updated = current.copy(isCompleted = newCompleted)
+        val wasCompleted = current.completedDates.contains(today)
+        val newCompleted = !wasCompleted
 
-        _habits.value = _habits.value.map { if (it.id == id) updated else it }
+        val updatedDates = if (newCompleted) {
+            current.completedDates + today
+        } else {
+            current.completedDates.filter { it != today }
+        }
+
+        val updatedHabit = current.copy(completedDates = updatedDates)
+        _habits.value = _habits.value.map { if (it.id == id) updatedHabit else it }
 
         viewModelScope.launch {
-            repository.updateHabit(updated)
-
-            val todayStart = getStartOfDay(System.currentTimeMillis())
-            habitCompletionRepository.insert(
-                HabitCompletion(id, todayStart, newCompleted)
-            )
+            repository.updateHabit(updatedHabit)
+            habitCompletionRepository.insert(HabitCompletion(id, today, newCompleted))
         }
     }
 
@@ -88,8 +112,7 @@ class HabitViewModel @Inject constructor(
         if (title.isBlank()) return
         val newHabit = Habit(
             id = (_habits.value.maxOfOrNull { it.id }?.inc() ?: 1L),
-            title = title.trim(),
-            isCompleted = false
+            title = title.trim()
         )
         viewModelScope.launch {
             repository.addHabit(newHabit)
