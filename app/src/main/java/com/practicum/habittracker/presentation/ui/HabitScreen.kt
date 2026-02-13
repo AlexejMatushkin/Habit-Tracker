@@ -1,4 +1,4 @@
-package com.practicum.habittracker
+package com.practicum.habittracker.presentation.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable

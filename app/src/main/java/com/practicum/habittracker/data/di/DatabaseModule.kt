@@ -3,6 +3,7 @@ package com.practicum.habittracker.data.di
 import android.content.Context
 import androidx.room.Room
 import com.practicum.habittracker.data.dao.HabitDao
+import com.practicum.habittracker.data.dao.PomodoroDao
 import com.practicum.habittracker.data.database.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -25,4 +26,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideHabitDao(database: AppDatabase): HabitDao = database.habitDao()
+
+    @Provides
+    @Singleton
+    fun providePomodoroDao(database: AppDatabase): PomodoroDao = database.pomodoroDao()
 }
