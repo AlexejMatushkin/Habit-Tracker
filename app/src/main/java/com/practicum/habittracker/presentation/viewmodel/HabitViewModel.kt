@@ -6,11 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.habittracker.domain.model.Habit
 import com.practicum.habittracker.domain.repository.HabitRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HabitViewModel(
+@HiltViewModel
+class HabitViewModel @Inject constructor(
     private val repository: HabitRepository
 ) : ViewModel() {
 

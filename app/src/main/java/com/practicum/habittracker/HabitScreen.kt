@@ -18,14 +18,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.practicum.habittracker.presentation.viewmodel.HabitViewModel
-import com.practicum.habittracker.presentation.viewmodel.HabitViewModelFactory
 
 @Composable
 fun HabitScreen(
-    viewModel: HabitViewModel,
-    onNavigateToPomodoro: () -> Unit
+    onNavigateToPomodoro: () -> Unit,
+    viewModel: HabitViewModel = hiltViewModel()
 ) {
 
     val habits by viewModel.habits
