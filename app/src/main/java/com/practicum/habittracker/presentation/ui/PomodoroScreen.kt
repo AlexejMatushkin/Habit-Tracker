@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 fun PomodoroScreen(
@@ -27,15 +28,18 @@ fun PomodoroScreen(
     var isRunning by remember { mutableStateOf(false) }
     var mode by remember { mutableStateOf(PomodoroMode.WORK) }
 
-    LaunchedEffect(isRunning) {
+    LaunchedEffect(isRunning, mode) {
         if (isRunning) {
-            while (timeLeft > 0) {
+            while (timeLeft > 0 && isActive) {
                 delay(1000)
                 timeLeft--
             }
-
-            mode = if (mode == PomodoroMode.WORK) PomodoroMode.BREAK else PomodoroMode.WORK
-            timeLeft = if (mode == PomodoroMode.WORK) 25 * 60 else 5 * 60
+            if (timeLeft <= 0 && isActive) {
+                // Переключаем режим
+                mode = if (mode == PomodoroMode.WORK) PomodoroMode.BREAK else PomodoroMode.WORK
+                timeLeft = if (mode == PomodoroMode.WORK) 25 * 60 else 5 * 60
+                // Таймер продолжает идти автоматически
+            }
         }
     }
 
