@@ -1,10 +1,13 @@
 package com.practicum.habittracker.data.di
 
+import com.practicum.habittracker.data.dao.HabitCompletionDao
 import com.practicum.habittracker.data.dao.HabitDao
 import com.practicum.habittracker.data.dao.PomodoroDao
 import com.practicum.habittracker.data.model.HabitMapper
+import com.practicum.habittracker.data.repository.HabitCompletionRepositoryImpl
 import com.practicum.habittracker.data.repository.HabitRepositoryImpl
 import com.practicum.habittracker.data.repository.PomodoroRepositoryImpl
+import com.practicum.habittracker.domain.repository.HabitCompletionRepository
 import com.practicum.habittracker.domain.repository.HabitRepository
 import com.practicum.habittracker.domain.repository.PomodoroRepository
 import dagger.Module
@@ -32,4 +35,10 @@ object RepositoryModule {
     @Singleton
     fun providePomodoroRepository(pomodoroDao: PomodoroDao): PomodoroRepository =
         PomodoroRepositoryImpl(pomodoroDao)
+
+    @Provides
+    @Singleton
+    fun provideHabitCompletionRepository(
+        habitCompletionDao: HabitCompletionDao
+    ): HabitCompletionRepository = HabitCompletionRepositoryImpl(habitCompletionDao)
 }
