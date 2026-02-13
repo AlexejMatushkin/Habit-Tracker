@@ -46,4 +46,11 @@ class HabitViewModel @Inject constructor(
             repository.addHabit(newHabit)
         }
     }
+
+    fun deleteHabit(id: Long) {
+        val habitToDelete = _habits.value.find { it.id == id } ?: return
+        viewModelScope.launch {
+            repository.deleteHabit(habitToDelete)
+        }
+    }
 }
