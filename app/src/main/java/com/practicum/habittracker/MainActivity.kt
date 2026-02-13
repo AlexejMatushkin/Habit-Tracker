@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,51 +41,56 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
 
-                NavHost(
-                    navController = navController,
-                    startDestination = Screens.HABITS
-                ) {
-                    composable(Screens.HABITS) {
-                        val viewModel: HabitViewModel = hiltViewModel()
-                        HabitScreen(
-                            navController = navController,
-                            onNavigateToPomodoro = { navController.navigate(Screens.POMODORO) },
-                            viewModel = viewModel
-                        )
-                    }
-                    composable(Screens.POMODORO) {
-                        val viewModel: PomodoroViewModel = hiltViewModel()
-                        PomodoroScreen(
-                            viewModel = viewModel,
-                            onNavigateToHabits = { navController.navigate(Screens.HABITS) }
-                        )
-                    }
-                    composable(
-                        route = "${Screens.HABIT_CALENDAR}/{habitId}?habitTitle={habitTitle}",
-                        arguments = listOf(
-                            navArgument("habitId") { type = NavType.LongType },
-                            navArgument("habitTitle") { type = NavType.StringType; defaultValue = "Привычка" }
-                        )
-                    ) { backStackEntry ->
-                        val habitId = backStackEntry.arguments?.getLong("habitId") ?: 0L
-                        val habitTitle = backStackEntry.arguments?.getString("habitTitle") ?: "Привычка"
+                key(themeMode) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = Screens.HABITS,
+                    ) {
+                        composable(Screens.HABITS) {
+                            val viewModel: HabitViewModel = hiltViewModel()
+                            HabitScreen(
+                                navController = navController,
+                                onNavigateToPomodoro = { navController.navigate(Screens.POMODORO) },
+                                viewModel = viewModel
+                            )
+                        }
+                        composable(Screens.POMODORO) {
+                            val viewModel: PomodoroViewModel = hiltViewModel()
+                            PomodoroScreen(
+                                onNavigateToHabits = { navController.navigate(Screens.HABITS) },
+                                viewModel = viewModel,
+                            )
+                        }
+                        composable(
+                            route = "${Screens.HABIT_CALENDAR}/{habitId}?habitTitle={habitTitle}",
+                            arguments = listOf(
+                                navArgument("habitId") { type = NavType.LongType },
+                                navArgument("habitTitle") {
+                                    type = NavType.StringType; defaultValue = "Привычка"
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val habitId = backStackEntry.arguments?.getLong("habitId") ?: 0L
+                            val habitTitle =
+                                backStackEntry.arguments?.getString("habitTitle") ?: "Привычка"
 
-                        val viewModel: HabitCalendarViewModel = hiltViewModel()
-                        viewModel.loadCompletions(habitId)
+                            val viewModel: HabitCalendarViewModel = hiltViewModel()
+                            viewModel.loadCompletions(habitId)
 
-                        HabitCalendarScreen(
-                            habitTitle = habitTitle,
-                            viewModel = viewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
+                            HabitCalendarScreen(
+                                habitTitle = habitTitle,
+                                viewModel = viewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
 
-                    composable(Screens.SETTINGS) {
-                        val viewModel: SettingsViewModel = hiltViewModel()
-                        SettingsScreen(
-                            viewModel = viewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
+                        composable(Screens.SETTINGS) {
+                            val viewModel: SettingsViewModel = hiltViewModel()
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
                     }
                 }
             }
